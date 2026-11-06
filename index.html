@@ -1,0 +1,397 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Мерджики</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=Manrope:wght@500;700;800&display=swap">
+<style>
+/* Layout: one-screen phone app — header, orders strip, 7×8 sticker board, action bar; Y2K neon sticker look, deliberately single dark theme */
+:root{
+  --bg:#0a0612; --panel:#17102a; --panel-2:#211740; --line:#33265a;
+  --ink:#f8f3ff; --muted:#a493c9;
+  --lime:#c8ff3f; --pink:#ff4fd8; --cyan:#4df2ff; --violet:#8a4bff; --gold:#ffd23f;
+  --display:'Unbounded',system-ui,sans-serif; --body:'Manrope',system-ui,sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;
+  background-image:
+    radial-gradient(circle at 15% 10%, rgba(138,75,255,.25), transparent 40%),
+    radial-gradient(circle at 90% 90%, rgba(255,79,216,.18), transparent 40%),
+    repeating-linear-gradient(0deg, transparent 0 23px, rgba(255,255,255,.035) 23px 24px),
+    repeating-linear-gradient(90deg, transparent 0 23px, rgba(255,255,255,.035) 23px 24px);
+  background-attachment:fixed; overflow-x:hidden; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none;}
+*{box-sizing:border-box}
+.app{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;gap:10px;
+  padding-block:10px 14px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.logo{font-family:var(--display);font-weight:900;font-size:22px;letter-spacing:-.02em;color:#0a0612;background:var(--lime);
+  padding:4px 10px;border-radius:10px;transform:rotate(-3deg);box-shadow:3px 3px 0 var(--pink),0 0 24px rgba(200,255,63,.35);border:2px solid #fff;}
+.stats{display:flex;gap:6px}
+.pill{display:flex;align-items:center;gap:4px;background:var(--panel);border:1.5px solid var(--line);border-radius:999px;padding:5px 9px;font-weight:800;font-size:12px;font-variant-numeric:tabular-nums}
+.pill b{color:var(--lime)}
+.pill.coins b{color:var(--gold)}
+.pill.lvl{background:var(--violet);border-color:#fff;color:#fff}
+.xpbar{height:4px;background:var(--panel);border-radius:4px;overflow:hidden;margin-top:-4px}
+.xpbar i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--pink));width:0;transition:width .4s}
+
+/* orders */
+.orders{display:flex;gap:8px;overflow-x:auto;padding:6px 2px 8px;scrollbar-width:none}
+.orders::-webkit-scrollbar{display:none}
+.order{flex:0 0 auto;min-width:112px;background:var(--panel-2);border:2px solid var(--line);border-radius:16px;padding:8px 10px;display:flex;flex-direction:column;gap:4px;align-items:center;position:relative;transition:transform .15s,border-color .15s}
+.order .big{font-size:30px;line-height:1;filter:drop-shadow(0 2px 0 #000)}
+.order .nm{font-size:11px;font-weight:700;color:var(--muted);text-align:center;max-width:110px;text-wrap:balance}
+.order .rw{font-size:11px;font-weight:800;color:var(--gold)}
+.order .deliver{font-family:var(--body);font-weight:800;font-size:11px;background:var(--lime);color:#0a0612;border:1.5px solid #fff;border-radius:999px;padding:4px 10px;cursor:pointer;box-shadow:2px 2px 0 #000}
+.order .deliver[disabled]{background:var(--panel);color:var(--muted);border-color:var(--line);box-shadow:none;cursor:default}
+.order.ready{border-color:var(--lime);box-shadow:0 0 18px rgba(200,255,63,.35)}
+.order.hover{transform:scale(1.06);border-color:var(--pink)}
+.order .tag{position:absolute;top:-8px;left:8px;background:var(--pink);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:999px;border:1.5px solid #fff;letter-spacing:.06em;text-transform:uppercase}
+
+/* board */
+.boardwrap{background:var(--panel);border:2px solid var(--line);border-radius:22px;padding:8px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 10px 40px rgba(0,0,0,.5);position:relative}
+.board{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;touch-action:none}
+.cell{aspect-ratio:1;border-radius:12px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;position:relative;font-size:clamp(20px,6.2vw,32px);line-height:1;transition:background .12s,transform .12s}
+.cell.hover{background:rgba(200,255,63,.2);border-color:var(--lime)}
+.cell.src{opacity:.35}
+.cell.sel{outline:2px solid var(--cyan);outline-offset:-2px}
+.cell .e{filter:drop-shadow(0 1px 0 #fff) drop-shadow(0 0 1px #fff) drop-shadow(0 3px 0 rgba(0,0,0,.6));pointer-events:none}
+.cell.item{background:linear-gradient(145deg,#2d1a5a,#1b1038);border-color:rgba(255,255,255,.14)}
+.cell.item.hi{border-color:var(--pink);box-shadow:0 0 12px rgba(255,79,216,.45)}
+.cell.item.max{border-color:var(--gold);box-shadow:0 0 14px rgba(255,210,63,.55);background:linear-gradient(145deg,#5a3a0e,#2b1b05)}
+.cell.gen{background:linear-gradient(145deg,#2a3d05,#15200a);border:2px solid var(--lime);box-shadow:0 0 14px rgba(200,255,63,.35);animation:breathe 2.4s ease-in-out infinite}
+.cell.gen.empty{animation:none;opacity:.55;border-style:dashed}
+@keyframes breathe{0%,100%{box-shadow:0 0 10px rgba(200,255,63,.25)}50%{box-shadow:0 0 20px rgba(200,255,63,.6)}}
+.cell .lv{position:absolute;right:2px;bottom:2px;font-size:9px;font-weight:800;background:#000;color:#fff;border-radius:999px;padding:1px 4px;line-height:1.2;pointer-events:none;border:1px solid rgba(255,255,255,.3)}
+.cell.gen .lv{background:var(--lime);color:#0a0612}
+.cell .tap{position:absolute;left:2px;top:2px;font-size:8px;font-weight:900;color:#0a0612;background:var(--lime);border-radius:4px;padding:1px 3px;pointer-events:none}
+.cell.pop .e{animation:pop .4s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{0%{transform:scale(.3) rotate(-20deg)}60%{transform:scale(1.35) rotate(8deg)}100%{transform:scale(1)}}
+.cell.shake{animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+.ghost{position:fixed;left:0;top:0;pointer-events:none;z-index:50;font-size:40px;line-height:1;transform:translate(-50%,-60%) rotate(-8deg) scale(1.1);filter:drop-shadow(0 2px 0 #fff) drop-shadow(0 8px 10px rgba(0,0,0,.6));will-change:transform}
+.spark{position:absolute;pointer-events:none;z-index:40;font-size:14px;animation:fly .7s ease-out forwards}
+@keyframes fly{to{transform:translate(var(--dx),var(--dy)) scale(.2);opacity:0}}
+.fullwarn{position:absolute;inset:0;border-radius:22px;border:2px solid var(--pink);pointer-events:none;opacity:0;transition:opacity .2s}
+.fullwarn.on{opacity:1;animation:shake .3s}
+
+/* info + actions */
+.info{min-height:62px;background:var(--panel-2);border:2px solid var(--line);border-radius:16px;padding:8px 12px;display:flex;align-items:center;gap:10px}
+.info .ie{font-size:34px;line-height:1;filter:drop-shadow(0 1px 0 #fff) drop-shadow(0 3px 0 rgba(0,0,0,.6))}
+.info .it{flex:1;min-width:0}
+.info .it b{display:block;font-family:var(--display);font-size:13px;font-weight:700}
+.info .it span{color:var(--muted);font-size:12px}
+.info .chain{display:flex;gap:2px;font-size:13px;margin-top:3px;opacity:.9;flex-wrap:wrap}
+.info .chain i{font-style:normal;opacity:.3}
+.info .chain i.on{opacity:1}
+.info .chain i.cur{opacity:1;transform:scale(1.25);display:inline-block}
+.btn{font-family:var(--body);font-weight:800;font-size:12px;border-radius:999px;padding:8px 12px;border:1.5px solid #fff;cursor:pointer;color:#0a0612;background:var(--cyan);box-shadow:2px 2px 0 #000;white-space:nowrap}
+.btn.pink{background:var(--pink);color:#fff}
+.btn.lime{background:var(--lime)}
+.btn.ghostb{background:var(--panel);color:var(--ink);border-color:var(--line);box-shadow:none}
+.btn:focus-visible,.deliver:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.actions{display:flex;gap:8px}
+.actions .btn{flex:1;text-align:center;padding:11px 8px;font-size:13px}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(5,2,12,.78);backdrop-filter:blur(6px);z-index:100;display:flex;align-items:flex-end;justify-content:center;
+  padding-left:max(0px,env(safe-area-inset-left,0px));padding-right:max(0px,env(safe-area-inset-right,0px))}
+.sheet{width:100%;max-width:520px;max-height:86vh;overflow:auto;background:var(--panel);border:2px solid var(--line);border-bottom:0;border-radius:24px 24px 0 0;padding:14px 16px calc(20px + env(safe-area-inset-bottom,0px))}
+.sheet h2{font-family:var(--display);font-size:18px;margin:0 0 10px;display:flex;justify-content:space-between;align-items:center;text-wrap:balance}
+.sheet h2 .x{font-family:var(--body);font-size:12px;background:var(--panel-2);border:1.5px solid var(--line);color:var(--ink);border-radius:999px;padding:6px 10px;cursor:pointer}
+.crow{display:flex;flex-direction:column;gap:4px;padding:10px 0;border-top:1px solid var(--line)}
+.crow .ch{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:13px}
+.crow .ch span{color:var(--muted);font-weight:700;font-size:11px}
+.crow .ems{display:flex;flex-wrap:wrap;gap:6px;font-size:24px;line-height:1}
+.crow .ems i{font-style:normal;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--panel-2);border:1px solid var(--line)}
+.crow .ems i.off{opacity:.3;filter:grayscale(1)}
+.crow .ems i.gen{border-color:var(--lime)}
+.srow{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.srow .se{font-size:30px;line-height:1;filter:drop-shadow(0 1px 0 #fff)}
+.srow .st{flex:1;min-width:0}
+.srow .st b{display:block;font-size:13px}
+.srow .st span{color:var(--muted);font-size:11px}
+.srow.locked{opacity:.5}
+.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%) translateY(-20px);background:var(--pink);color:#fff;border:2px solid #fff;font-weight:800;padding:8px 14px;border-radius:999px;z-index:200;opacity:0;transition:.25s;box-shadow:3px 3px 0 #000;font-size:13px;max-width:90vw;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.lime{background:var(--lime);color:#0a0612}
+.hint{font-size:11px;color:var(--muted);text-align:center}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="app">
+  <div class="top">
+    <div class="logo">МЕРДЖИКИ</div>
+    <div class="stats">
+      <div class="pill" id="pEnergy" title="Энергия">⚡<b id="energy">100</b></div>
+      <div class="pill coins">🪙<b id="coins">0</b></div>
+      <div class="pill lvl"><span id="lvl">1</span> ур.</div>
+    </div>
+  </div>
+  <div class="xpbar"><i id="xp"></i></div>
+
+  <div class="orders" id="orders"></div>
+
+  <div class="boardwrap">
+    <div class="board" id="board"></div>
+    <div class="fullwarn" id="fullwarn"></div>
+  </div>
+
+  <div class="info" id="info"></div>
+
+  <div class="actions">
+    <button class="btn ghostb" id="bColl">📒 Коллекция</button>
+    <button class="btn pink" id="bShop">🛍️ Магазин</button>
+  </div>
+  <div class="hint">Тапай генератор, тяни одинаковые друг на друга, сдавай заказы</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ---------- данные: 12 цепочек, каждая со своим генератором ----------
+const CHAINS = [
+ {name:'Сад',       gen:['🪴','Горшок'],    items:[['🌱','Росток'],['🌿','Трава'],['🍀','Клевер'],['🌷','Тюльпан'],['🌻','Подсолнух'],['🌹','Роза'],['🌳','Дерево'],['🌴','Пальма'],['🏝️','Остров']]},
+ {name:'Фрукты',    gen:['🧺','Корзина'],   items:[['🫐','Черника'],['🍓','Клубника'],['🍒','Вишня'],['🍋','Лимон'],['🍊','Апельсин'],['🍎','Яблоко'],['🥭','Манго'],['🍍','Ананас'],['🍉','Арбуз']]},
+ {name:'Птицы',     gen:['🪺','Гнездо'],    items:[['🥚','Яйцо'],['🐣','Вылупыш'],['🐥','Цыплёнок'],['🐔','Курица'],['🦆','Утка'],['🦢','Лебедь'],['🦚','Павлин'],['🦩','Фламинго'],['🦅','Орёл'],['🐉','Дракон']]},
+ {name:'Море',      gen:['🫧','Пузыри'],    items:[['🐚','Ракушка'],['🐟','Рыбка'],['🐠','Рыба-клоун'],['🐡','Фугу'],['🦀','Краб'],['🐙','Осьминог'],['🦑','Кальмар'],['🦈','Акула'],['🐳','Кит']]},
+ {name:'Сладости',  gen:['🛍️','Пакет'],     items:[['🍬','Конфета'],['🍭','Леденец'],['🍫','Шоколад'],['🍩','Пончик'],['🍪','Печенье'],['🧁','Капкейк'],['🍰','Кусок торта'],['🎂','Торт'],['🎉','Праздник']]},
+ {name:'Зверята',   gen:['🏠','Будка'],     items:[['🐭','Мышка'],['🐹','Хомяк'],['🐰','Кролик'],['🐱','Кот'],['🐶','Пёс'],['🦊','Лис'],['🐻','Медведь'],['🦁','Лев'],['🐯','Тигр'],['🦄','Единорог']]},
+ {name:'Космос',    gen:['🔭','Телескоп'],  items:[['✨','Искра'],['⭐','Звезда'],['🌟','Суперзвезда'],['💫','Вспышка'],['🌙','Луна'],['🪐','Планета'],['☄️','Комета'],['🌌','Галактика'],['🚀','Ракета'],['🛸','НЛО']]},
+ {name:'Транспорт', gen:['🔧','Гараж'],     items:[['🛴','Самокат'],['🚲','Велик'],['🛵','Мопед'],['🚗','Машина'],['🚕','Такси'],['🚌','Автобус'],['🚂','Поезд'],['✈️','Самолёт'],['🚁','Вертолёт']]},
+ {name:'Музыка',    gen:['🎧','Наушники'],  items:[['🎵','Нота'],['🎶','Ноты'],['🎤','Микрофон'],['🎸','Гитара'],['🎹','Пианино'],['🥁','Барабаны'],['🎷','Саксофон'],['🎺','Труба'],['🎻','Скрипка']]},
+ {name:'Погода',    gen:['☁️','Облако'],    items:[['💧','Капля'],['🌧️','Дождь'],['⛅','Облачно'],['🌈','Радуга'],['⚡','Молния'],['🌪️','Торнадо'],['🌋','Вулкан']]},
+ {name:'Сердечки',  gen:['💌','Письмо'],    items:[['🤍','Белое'],['💛','Жёлтое'],['🧡','Оранжевое'],['❤️','Красное'],['💖','Блестящее'],['💗','Растущее'],['💝','Подарок'],['💘','Стрела']]},
+ {name:'Сокровища', gen:['⛏️','Кирка'],     items:[['🪨','Камень'],['🪙','Монета'],['💰','Мешок'],['💍','Кольцо'],['💎','Алмаз'],['👑','Корона'],['🏆','Кубок']]},
+];
+const COLS=7, ROWS=8, N=COLS*ROWS, EMAX=100, EREGEN=20000; // 1 энергия / 20 с
+const KEY='merdzhiki-v1';
+
+let S; // состояние
+function fresh(){
+  const cells=Array(N).fill(null);
+  const put=(i,v)=>cells[i]=v;
+  put(23,{t:'gen',c:1,l:1}); put(24,{t:'gen',c:0,l:1}); put(25,{t:'gen',c:2,l:1});
+  put(30,{t:'item',c:1,l:1}); put(31,{t:'item',c:1,l:1}); put(32,{t:'item',c:0,l:1}); put(38,{t:'item',c:0,l:2}); put(39,{t:'item',c:2,l:1});
+  return {cells,energy:EMAX,energyTs:Date.now(),coins:60,xp:0,lvl:1,unlocked:[0,1,2],disc:{},orders:[],oid:1,sel:null};
+}
+function load(){
+  try{const r=localStorage.getItem(KEY); if(r){const o=JSON.parse(r); if(o&&o.cells&&o.cells.length===N) return o;}}catch(e){}
+  return null;
+}
+let saveT; function save(){clearTimeout(saveT); saveT=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}},150)}
+
+// ---------- помощники ----------
+const $=id=>document.getElementById(id);
+const rnd=n=>Math.floor(Math.random()*n);
+const ch=c=>CHAINS[c];
+const maxL=c=>ch(c).items.length;
+const emo=v=>v.t==='gen'?ch(v.c).gen[0]:ch(v.c).items[v.l-1][0];
+const nameOf=v=>v.t==='gen'?ch(v.c).gen[1]:ch(v.c).items[v.l-1][1];
+const same=(a,b)=>a&&b&&a.t===b.t&&a.c===b.c&&a.l===b.l;
+function toast(msg,lime){const t=$('toast');t.textContent=msg;t.classList.toggle('lime',!!lime);t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),1600)}
+function needXp(l){return 80+l*70}
+function discover(c,l){const k=c+':'+l; if(!S.disc[k]){S.disc[k]=1; return true} return false}
+
+// ---------- энергия ----------
+function tickEnergy(){
+  const now=Date.now();
+  if(S.energy>=EMAX){S.energyTs=now;return}
+  const gained=Math.floor((now-S.energyTs)/EREGEN);
+  if(gained>0){S.energy=Math.min(EMAX,S.energy+gained);S.energyTs+=gained*EREGEN;if(S.energy>=EMAX)S.energyTs=now;renderStats();save()}
+}
+setInterval(tickEnergy,1000);
+
+// ---------- заказы ----------
+function makeOrder(){
+  const c=S.unlocked[rnd(S.unlocked.length)];
+  const top=Math.min(maxL(c)-1, 3+Math.floor(S.lvl/2));
+  let l=3+rnd(Math.max(1,top-2)); if(Math.random()<.35) l=Math.min(top,l+1);
+  l=Math.max(2,Math.min(l,maxL(c)-1));
+  return {id:S.oid++,c,l,coins:l*l*4+10,xp:l*14};
+}
+function fillOrders(){while(S.orders.length<3)S.orders.push(makeOrder())}
+function hasItem(c,l){return S.cells.findIndex(v=>v&&v.t==='item'&&v.c===c&&v.l===l)}
+function deliver(o,idx){
+  if(idx==null||idx<0)idx=hasItem(o.c,o.l); if(idx<0)return;
+  S.cells[idx]=null; if(S.sel===idx)S.sel=null;
+  S.coins+=o.coins; addXp(o.xp);
+  S.orders=S.orders.filter(x=>x.id!==o.id); fillOrders();
+  toast(`+${o.coins} 🪙  +${o.xp} XP`,true); renderAll(); save();
+}
+function addXp(n){
+  S.xp+=n;
+  while(S.xp>=needXp(S.lvl)){
+    S.xp-=needXp(S.lvl); S.lvl++;
+    const locked=CHAINS.map((_,i)=>i).filter(i=>!S.unlocked.includes(i));
+    if(locked.length && S.lvl%2===0){
+      const c=locked[0]; S.unlocked.push(c);
+      const e=S.cells.indexOf(null); if(e>=0)S.cells[e]={t:'gen',c,l:1};
+      setTimeout(()=>toast(`Уровень ${S.lvl}! Новая цепочка: ${ch(c).name} ${ch(c).gen[0]}`),300);
+    } else { S.coins+=40; setTimeout(()=>toast(`Уровень ${S.lvl}! +40 🪙`),300); }
+    S.energy=EMAX;
+  }
+}
+
+// ---------- генератор ----------
+function nearestEmpty(i){
+  const r0=Math.floor(i/COLS),c0=i%COLS; let best=-1,bd=1e9;
+  S.cells.forEach((v,j)=>{if(v)return;const d=Math.abs(Math.floor(j/COLS)-r0)+Math.abs(j%COLS-c0);if(d<bd){bd=d;best=j}});
+  return best;
+}
+function spawn(i){
+  const g=S.cells[i];
+  if(S.energy<=0){toast('Энергия кончилась — подожди или купи в магазине');return}
+  const j=nearestEmpty(i);
+  if(j<0){const w=$('fullwarn');w.classList.remove('on');void w.offsetWidth;w.classList.add('on');setTimeout(()=>w.classList.remove('on'),900);toast('Поле заполнено — слей или продай что-нибудь');return}
+  let l=1; if(Math.random()<.22*g.l)l++; if(Math.random()<.07*g.l)l++; l=Math.min(l,maxL(g.c)-2);
+  S.cells[j]={t:'item',c:g.c,l}; S.energy--; discover(g.c,l);
+  renderAll(); animPop(j); fx(j,'✨'); save();
+}
+
+// ---------- мердж ----------
+function merge(a,b){ // a -> b
+  const A=S.cells[a],B=S.cells[b];
+  if(A.t==='item'){
+    if(A.l>=maxL(A.c)){toast('Это максимум цепочки — сдай его или продай');return false}
+    S.cells[b]={t:'item',c:A.c,l:A.l+1}; S.cells[a]=null;
+    const nw=discover(A.c,A.l+1); addXp(A.l*3);
+    if(A.l+1>=maxL(A.c)){S.coins+=50;toast(`🏆 ${nameOf(S.cells[b])} — вершина цепочки! +50 🪙`,true)}
+    else if(nw)toast(`Новое: ${emo(S.cells[b])} ${nameOf(S.cells[b])}`,true);
+  } else {
+    if(A.l>=3){toast('Генератор уже прокачан до максимума');return false}
+    S.cells[b]={t:'gen',c:A.c,l:A.l+1}; S.cells[a]=null; toast(`${ch(A.c).gen[1]} прокачан до ${A.l+1} ур. — даёт предметы выше`,true);
+  }
+  S.sel=b; return true;
+}
+
+// ---------- рендер ----------
+const board=$('board');
+function renderBoard(){
+  let h='';
+  S.cells.forEach((v,i)=>{
+    let cls='cell',inner='';
+    if(v){
+      if(v.t==='gen'){cls+=' gen'+(S.energy<=0?' empty':'');inner=`<span class="e">${emo(v)}</span><span class="tap">TAP</span><span class="lv">${v.l}</span>`}
+      else{cls+=' item'+(v.l>=maxL(v.c)?' max':v.l>=6?' hi':'');inner=`<span class="e">${emo(v)}</span><span class="lv">${v.l}</span>`}
+    }
+    if(S.sel===i)cls+=' sel';
+    h+=`<div class="${cls}" data-i="${i}">${inner}</div>`;
+  });
+  board.innerHTML=h;
+}
+function renderOrders(){
+  $('orders').innerHTML=S.orders.map(o=>{
+    const have=hasItem(o.c,o.l)>=0; const it=ch(o.c).items[o.l-1];
+    return `<div class="order ${have?'ready':''}" data-oid="${o.id}"><span class="tag">${ch(o.c).name}</span><div class="big">${it[0]}</div><div class="nm">${it[1]} · ${o.l} ур.</div><div class="rw">🪙 ${o.coins} · ${o.xp} XP</div><button class="deliver" data-oid="${o.id}" ${have?'':'disabled'}>${have?'Сдать':'Нужен'}</button></div>`;
+  }).join('');
+}
+function renderStats(){
+  $('energy').textContent=S.energy; $('coins').textContent=S.coins; $('lvl').textContent=S.lvl;
+  $('xp').style.width=Math.min(100,100*S.xp/needXp(S.lvl))+'%';
+  $('pEnergy').title=S.energy<EMAX?`+1 каждые 20 с`:'Полная';
+}
+function renderInfo(){
+  const el=$('info'); const v=S.sel!=null?S.cells[S.sel]:null;
+  if(!v){el.innerHTML=`<div class="ie">👆</div><div class="it"><b>Выбери предмет</b><span>Тап по предмету — инфо и продажа. Тап по генератору — новый предмет (−1 ⚡).</span></div>`;return}
+  const C=ch(v.c);
+  if(v.t==='gen'){
+    el.innerHTML=`<div class="ie">${emo(v)}</div><div class="it"><b>${C.gen[1]} · ${v.l} ур.</b><span>Генератор цепочки «${C.name}». Слей два одинаковых, чтобы прокачать.</span><div class="chain">${C.items.map(x=>`<i class="on">${x[0]}</i>`).join('')}</div></div>`;
+    return;
+  }
+  const price=v.l*v.l+1;
+  el.innerHTML=`<div class="ie">${emo(v)}</div><div class="it"><b>${nameOf(v)} · ${v.l}/${maxL(v.c)}</b><span>Цепочка «${C.name}»</span><div class="chain">${C.items.map((x,k)=>`<i class="${k+1===v.l?'cur':S.disc[v.c+':'+(k+1)]?'on':''}">${S.disc[v.c+':'+(k+1)]||k+1===v.l?x[0]:'❔'}</i>`).join('')}</div></div><button class="btn ghostb" id="sell">Продать 🪙${price}</button>`;
+  $('sell').onclick=()=>{S.coins+=price;S.cells[S.sel]=null;S.sel=null;renderAll();save()};
+}
+function renderAll(){renderBoard();renderOrders();renderStats();renderInfo()}
+function animPop(i){const c=board.children[i];if(c){c.classList.add('pop')}}
+function fx(i,e){
+  const c=board.children[i]; if(!c)return; const r=c.getBoundingClientRect(),w=$('board').parentElement.getBoundingClientRect();
+  for(let k=0;k<6;k++){const s=document.createElement('span');s.className='spark';s.textContent=e;
+    s.style.left=(r.left-w.left+r.width/2)+'px';s.style.top=(r.top-w.top+r.height/2)+'px';
+    s.style.setProperty('--dx',(Math.cos(k)*50)+'px');s.style.setProperty('--dy',(Math.sin(k)*50-20)+'px');
+    w.appendChild(s);setTimeout(()=>s.remove(),750)}
+}
+
+// ---------- ввод: тап и drag ----------
+let drag=null;
+board.addEventListener('pointerdown',e=>{
+  const cell=e.target.closest('.cell'); if(!cell)return;
+  const i=+cell.dataset.i; if(!S.cells[i])return;
+  drag={i,x:e.clientX,y:e.clientY,t:Date.now(),moving:false,ghost:null,over:null};
+  board.setPointerCapture(e.pointerId);
+});
+board.addEventListener('pointermove',e=>{
+  if(!drag)return;
+  if(!drag.moving){ if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<7)return;
+    drag.moving=true; const g=document.createElement('div');g.className='ghost';g.textContent=emo(S.cells[drag.i]);document.body.appendChild(g);drag.ghost=g;
+    board.children[drag.i].classList.add('src'); }
+  drag.ghost.style.transform=`translate(${e.clientX}px,${e.clientY}px) translate(-50%,-60%) rotate(-8deg) scale(1.1)`;
+  const el=document.elementFromPoint(e.clientX,e.clientY);
+  const tgt=el&&(el.closest('.cell')||el.closest('.order'));
+  if(drag.over&&drag.over!==tgt)drag.over.classList.remove('hover');
+  if(tgt&&tgt!==board.children[drag.i]){tgt.classList.add('hover');drag.over=tgt}else drag.over=null;
+});
+function endDrag(e,cancel){
+  if(!drag)return; const d=drag; drag=null;
+  if(d.ghost)d.ghost.remove(); if(d.over)d.over.classList.remove('hover');
+  board.children[d.i]?.classList.remove('src');
+  if(cancel)return;
+  if(!d.moving){ // тап
+    const v=S.cells[d.i];
+    if(v.t==='gen'){S.sel=d.i;spawn(d.i);} else {S.sel=S.sel===d.i?null:d.i;renderAll();}
+    return;
+  }
+  const el=document.elementFromPoint(e.clientX,e.clientY);
+  const oc=el&&el.closest('.order');
+  if(oc){const o=S.orders.find(x=>x.id==oc.dataset.oid);const v=S.cells[d.i];
+    if(o&&v.t==='item'&&v.c===o.c&&v.l===o.l){deliver(o,d.i);fx(d.i,'🪙')}else{toast('Заказу нужен другой предмет');renderAll()} return;}
+  const tc=el&&el.closest('.cell'); if(!tc){renderAll();return}
+  const j=+tc.dataset.i; if(j===d.i){renderAll();return}
+  const A=S.cells[d.i],B=S.cells[j];
+  if(!B){S.cells[j]=A;S.cells[d.i]=null;S.sel=j;renderAll();save();return}
+  if(same(A,B)){ if(merge(d.i,j)){renderAll();animPop(j);fx(j,A.t==='gen'?'⚡':'💥');save()} else {renderAll()} return}
+  S.cells[j]=A;S.cells[d.i]=B;S.sel=j;renderAll();save();
+}
+board.addEventListener('pointerup',e=>endDrag(e,false));
+board.addEventListener('pointercancel',e=>endDrag(e,true));
+$('orders').addEventListener('click',e=>{const b=e.target.closest('.deliver');if(!b||b.disabled)return;const o=S.orders.find(x=>x.id==b.dataset.oid);if(o)deliver(o)});
+
+// ---------- модалки ----------
+function openSheet(title,html){
+  const m=document.createElement('div');m.className='modal';m.innerHTML=`<div class="sheet"><h2>${title}<button class="x">Закрыть</button></h2>${html}</div>`;
+  m.addEventListener('click',e=>{if(e.target===m||e.target.classList.contains('x'))m.remove()});
+  document.body.appendChild(m);return m;
+}
+$('bColl').onclick=()=>{
+  const total=CHAINS.reduce((a,c)=>a+c.items.length,0), got=Object.keys(S.disc).length;
+  openSheet(`Коллекция ${got}/${total}`, CHAINS.map((c,ci)=>{
+    const un=S.unlocked.includes(ci); const n=c.items.filter((_,k)=>S.disc[ci+':'+(k+1)]).length;
+    return `<div class="crow"><div class="ch">${c.gen[0]} ${c.name}<span>${un?n+'/'+c.items.length:'🔒 откроется с уровнем'}</span></div><div class="ems"><i class="gen ${un?'':'off'}">${c.gen[0]}</i>${c.items.map((x,k)=>`<i class="${S.disc[ci+':'+(k+1)]?'':'off'}">${S.disc[ci+':'+(k+1)]?x[0]:'❔'}</i>`).join('')}</div></div>`;
+  }).join(''));
+};
+function genPrice(c){const owned=S.cells.filter(v=>v&&v.t==='gen'&&v.c===c).length;return 90+c*25+owned*110}
+$('bShop').onclick=()=>{
+  const m=openSheet(`Магазин · 🪙 ${S.coins}`,
+    `<div class="srow"><div class="se">⚡</div><div class="st"><b>Энергия +50</b><span>Генераторы тратят 1 ⚡ за предмет</span></div><button class="btn lime" data-buy="energy">🪙 45</button></div>`+
+    CHAINS.map((c,ci)=>{const un=S.unlocked.includes(ci);const p=genPrice(ci);
+      return `<div class="srow ${un?'':'locked'}"><div class="se">${c.gen[0]}</div><div class="st"><b>${c.gen[1]} · ${c.name}</b><span>${un?'Второй генератор — слей два, чтобы прокачать':'Откроется с ростом уровня'}</span></div>${un?`<button class="btn" data-buy="${ci}">🪙 ${p}</button>`:'<span>🔒</span>'}</div>`}).join(''));
+  m.addEventListener('click',e=>{
+    const b=e.target.closest('[data-buy]');if(!b)return;const k=b.dataset.buy;
+    if(k==='energy'){if(S.coins<45){toast('Не хватает монет');return}S.coins-=45;S.energy=Math.min(EMAX,S.energy+50);}
+    else{const c=+k,p=genPrice(c);if(S.coins<p){toast('Не хватает монет');return}const e2=S.cells.indexOf(null);if(e2<0){toast('Нет места на поле');return}S.coins-=p;S.cells[e2]={t:'gen',c,l:1};animPop(e2)}
+    renderAll();save();m.remove();toast('Куплено',true);
+  });
+};
+
+// ---------- старт ----------
+function start(hot){
+  S=(hot&&hot.S)||load()||fresh();
+  fillOrders(); S.cells.forEach(v=>{if(v&&v.t==='item')discover(v.c,v.l)});
+  tickEnergy(); renderAll();
+  window.claude?.hot?.snapshot?.(()=>({S}));
+}
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+</script>
+
+</body></html>
