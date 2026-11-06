@@ -32,6 +32,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font
 .pill b{color:var(--lime)}
 .pill.coins b{color:var(--gold)}
 .pill.lvl{background:var(--violet);border-color:#fff;color:#fff}
+@media (max-width:400px){.logo{font-size:17px;padding:3px 8px}.stats{gap:4px}.pill{padding:4px 7px;font-size:11px}}
 .xpbar{height:4px;background:var(--panel);border-radius:4px;overflow:hidden;margin-top:-4px}
 .xpbar i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--pink));width:0;transition:width .4s}
 
@@ -306,11 +307,11 @@ function renderInfo(){
 function renderAll(){renderBoard();renderOrders();renderStats();renderInfo()}
 function animPop(i){const c=board.children[i];if(c){c.classList.add('pop')}}
 function fx(i,e){
-  const c=board.children[i]; if(!c)return; const r=c.getBoundingClientRect(),w=$('board').parentElement.getBoundingClientRect();
+  const c=board.children[i]; if(!c)return; const p=$('board').parentElement,r=c.getBoundingClientRect(),w=p.getBoundingClientRect();
   for(let k=0;k<6;k++){const s=document.createElement('span');s.className='spark';s.textContent=e;
     s.style.left=(r.left-w.left+r.width/2)+'px';s.style.top=(r.top-w.top+r.height/2)+'px';
     s.style.setProperty('--dx',(Math.cos(k)*50)+'px');s.style.setProperty('--dy',(Math.sin(k)*50-20)+'px');
-    w.appendChild(s);setTimeout(()=>s.remove(),750)}
+    p.appendChild(s);setTimeout(()=>s.remove(),750)}
 }
 
 // ---------- ввод: тап и drag ----------
